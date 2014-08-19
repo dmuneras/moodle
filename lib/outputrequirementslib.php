@@ -588,7 +588,10 @@ class page_requirements_manager {
         $included = array();
         $urls = array();
         foreach ($this->jqueryplugins as $name => $unused) {
-            if (isset($included[$name])) {
+            $plugin = $this->jqueryplugins[$name];
+
+            // Omit the plugin, if it was added before (In any location)
+            if (isset($included[$name]) || $plugin->included) {
                 continue;
             }
             if (array_key_exists($name, $this->jquerypluginoverrides)) {
@@ -622,7 +625,6 @@ class page_requirements_manager {
                     continue;
                 }
             }
-            $plugin = $this->jqueryplugins[$name];
             //Dont add plugins to be added on footer
             if(!($plugin->location == $location)){
                 continue;
