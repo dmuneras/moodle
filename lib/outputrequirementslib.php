@@ -456,7 +456,7 @@ class page_requirements_manager {
      * @param string $component name of the component
      * @return bool success
      */
-    public function jquery_plugin($plugin, $component = 'core') {
+    public function jquery_plugin($plugin, $component = 'core', $location = 'header') {
         global $CFG;
 
         if ($this->headdone) {
@@ -501,6 +501,8 @@ class page_requirements_manager {
         $this->jqueryplugins[$plugin]->plugin    = $plugin;
         $this->jqueryplugins[$plugin]->component = $component;
         $this->jqueryplugins[$plugin]->urls      = array();
+        $this->jqueryplugins[$plugin]->location  = $location;
+        $this->jqueryplugins[$plugin]->included  = false;
 
         foreach ($plugins[$plugin]['files'] as $file) {
             if ($CFG->debugdeveloper) {
@@ -573,19 +575,18 @@ class page_requirements_manager {
     }
 
     /**
-     * Return jQuery related markup for page start.
-     * @return string
+     * Return jquery plugins URLs to be added either on header or footer
+     * @param string : Location [header | footer]
+     * @return Array : $urls 
      */
-    protected function get_jquery_headcode() {
+    protected function get_jquery_plugins_urls_by_location($location = "header"){
         if (empty($this->jqueryplugins['jquery'])) {
             // If nobody requested jQuery then do not bother to load anything.
             // This may be useful for themes that want to override 'ui-css' only if requested by something else.
-            return '';
+            return array();
         }
-
         $included = array();
         $urls = array();
-
         foreach ($this->jqueryplugins as $name => $unused) {
             if (isset($included[$name])) {
                 continue;
@@ -621,13 +622,26 @@ class page_requirements_manager {
                     continue;
                 }
             }
-
             $plugin = $this->jqueryplugins[$name];
+            //Dont add plugins to be added on footer
+            if(!($plugin->location == $location)){
+                continue;
+            }
             $urls = array_merge($urls, $plugin->urls);
+            $plugin->included = true;
             $included[$name] = true;
         }
-
+        return $urls;
+    }
+    /**
+     * Return jQuery related markup for page start.
+     * @return string
+     */
+    protected function get_jquery_headcode() {
         $output = '';
+
+        $urls = $this->get_jquery_plugins_urls_by_location();
+
         $attributes = array('rel' => 'stylesheet', 'type' => 'text/css');
         foreach ($urls as $url) {
             if (preg_match('/\.js$/', $url)) {
@@ -637,7 +651,6 @@ class page_requirements_manager {
                 $output .= html_writer::empty_tag('link', $attributes) . "\n";
             }
         }
-
         return $output;
     }
 
@@ -1426,9 +1439,22 @@ class page_requirements_manager {
      */
     public function get_end_code() {
         global $CFG;
-
         // Add other requested modules.
         $output = $this->get_extra_modules_code();
+
+        //Add jQuery plugins on footer
+        $urls = $this->get_jquery_plugins_urls_by_location("footer");
+
+        $attributes = array('rel' => 'stylesheet', 'type' => 'text/css');
+        foreach ($urls as $url) {
+            if (preg_match('/\.js$/', $url)) {
+                $output .= html_writer::script('', $url);
+            } else if (preg_match('/\.css$/', $url)) {
+                $attributes['href'] = $url;
+                $output .= html_writer::empty_tag('link', $attributes) . "\n";
+            }
+        }
+        
 
         $this->js_init_code('M.util.js_complete("init");', true);
 
