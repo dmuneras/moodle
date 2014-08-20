@@ -38,3 +38,6 @@ composer.lock
 
 #IGNORE THEMES
 /theme/essential/
+
+#IGNORE MODS CHANGES
+/mod/mediagallery/

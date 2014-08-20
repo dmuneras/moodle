@@ -458,6 +458,12 @@ class page_requirements_manager {
      */
     public function jquery_plugin($plugin, $component = 'core', $location = 'header') {
         global $CFG;
+             
+        if(!(in_array($location, array("header","footer"))) ){
+            echo print_r($location);
+            debugging('Invalid location for jQuery plugin: $plugin given, must be header or footer');
+            return false;
+        }
 
         if ($this->headdone) {
             debugging('Can not add jQuery plugins after starting page output!');
@@ -479,8 +485,16 @@ class page_requirements_manager {
         }
 
         if (isset($this->jqueryplugins[$plugin])) {
-            // No problem, we already have something, first Moodle plugin to register the jQuery plugin wins.
-            return true;
+            if($this->jqueryplugins[$plugin]->location == $location){
+                // No problem, we already have something, 
+                //first Moodle plugin to register the jQuery plugin wins.
+                //if the are in same location.
+                return true;
+            }elseif ($location == "footer") {
+                //If location of the plugin to register is header
+                //overrride plugin to load.
+                return true;
+            }
         }
 
         $componentdir = core_component::get_component_directory($component);
@@ -535,7 +549,6 @@ class page_requirements_manager {
             }
             $this->jqueryplugins[$plugin]->urls[] = $url;
         }
-
         return true;
     }
 
@@ -579,6 +592,7 @@ class page_requirements_manager {
      * @param string : Location [header | footer]
      * @return Array : $urls 
      */
+    //TODO : Avoid looping twice to add jquery plugins into footer and header.
     protected function get_jquery_plugins_urls_by_location($location = "header"){
         if (empty($this->jqueryplugins['jquery'])) {
             // If nobody requested jQuery then do not bother to load anything.
@@ -587,11 +601,15 @@ class page_requirements_manager {
         }
         $included = array();
         $urls = array();
+        $jqp = $this->jqueryplugins;
         foreach ($this->jqueryplugins as $name => $unused) {
             $plugin = $this->jqueryplugins[$name];
-
+            //Dont add plugins to be added on footer
+            if($plugin->location != $location){
+                continue;
+            }
             // Omit the plugin, if it was added before (In any location)
-            if (isset($included[$name]) || $plugin->included) {
+            if (isset($included[$name])) {
                 continue;
             }
             if (array_key_exists($name, $this->jquerypluginoverrides)) {
@@ -625,14 +643,11 @@ class page_requirements_manager {
                     continue;
                 }
             }
-            //Dont add plugins to be added on footer
-            if(!($plugin->location == $location)){
-                continue;
-            }
             $urls = array_merge($urls, $plugin->urls);
             $plugin->included = true;
             $included[$name] = true;
         }
+
         return $urls;
     }
     /**
