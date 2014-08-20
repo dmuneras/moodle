@@ -517,7 +517,6 @@ class page_requirements_manager {
         $this->jqueryplugins[$plugin]->component = $component;
         $this->jqueryplugins[$plugin]->urls      = array();
         $this->jqueryplugins[$plugin]->location  = $location;
-        $this->jqueryplugins[$plugin]->included  = false;
 
         foreach ($plugins[$plugin]['files'] as $file) {
             if ($CFG->debugdeveloper) {
@@ -603,7 +602,6 @@ class page_requirements_manager {
         }
         $included = array();
         $urls = array();
-        $jqp = $this->jqueryplugins;
         foreach ($this->jqueryplugins as $name => $unused) {
             $plugin = $this->jqueryplugins[$name];
             //Dont add plugins to be added on footer
@@ -646,7 +644,6 @@ class page_requirements_manager {
                 }
             }
             $urls = array_merge($urls, $plugin->urls);
-            $plugin->included = true;
             $included[$name] = true;
         }
 
