@@ -637,12 +637,13 @@ class page_requirements_manager {
     }
     /**
      * Return jQuery related markup for page start.
+     * @param string $location : could be [header|footer]
      * @return string
      */
-    protected function get_jquery_headcode() {
+    protected function get_jquery_code($location) {
         $output = '';
 
-        $urls = $this->get_jquery_plugins_urls_by_location();
+        $urls = $this->get_jquery_plugins_urls_by_location($location);
 
         $attributes = array('rel' => 'stylesheet', 'type' => 'text/css');
         foreach ($urls as $url) {
@@ -1376,7 +1377,7 @@ class page_requirements_manager {
         $output .= $this->get_yui3lib_headcode($page);
 
         // Add hacked jQuery support, it is not intended for standard Moodle distribution!
-        $output .= $this->get_jquery_headcode();
+        $output .= $this->get_jquery_code('header');
 
         // Now theme CSS + custom CSS in this specific order.
         $output .= $this->get_css_code();
@@ -1444,20 +1445,9 @@ class page_requirements_manager {
         // Add other requested modules.
         $output = $this->get_extra_modules_code();
 
-        //Add jQuery plugins on footer
-        $urls = $this->get_jquery_plugins_urls_by_location("footer");
-
-        $attributes = array('rel' => 'stylesheet', 'type' => 'text/css');
-        foreach ($urls as $url) {
-            if (preg_match('/\.js$/', $url)) {
-                $output .= html_writer::script('', $url);
-            } else if (preg_match('/\.css$/', $url)) {
-                $attributes['href'] = $url;
-                $output .= html_writer::empty_tag('link', $attributes) . "\n";
-            }
-        }
+        // Add hacked jQuery support, it is not intended for standard Moodle distribution!
+        $output .= $this->get_jquery_code("footer");
         
-
         $this->js_init_code('M.util.js_complete("init");', true);
 
         // All the other linked scripts - there should be as few as possible.
