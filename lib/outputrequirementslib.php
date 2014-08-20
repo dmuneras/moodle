@@ -458,10 +458,10 @@ class page_requirements_manager {
      */
     public function jquery_plugin($plugin, $component = 'core', $location = 'header') {
         global $CFG;
-             
+         
+        //Make sure a valid location was given.    
         if(!(in_array($location, array("header","footer"))) ){
-            echo print_r($location);
-            debugging('Invalid location for jQuery plugin: $plugin given, must be header or footer');
+            debugging("Invalid location for jQuery plugin: $plugin given, must be header or footer");
             return false;
         }
 
@@ -488,11 +488,12 @@ class page_requirements_manager {
             if($this->jqueryplugins[$plugin]->location == $location){
                 // No problem, we already have something, 
                 //first Moodle plugin to register the jQuery plugin wins.
-                //if the are in same location.
+                //IF they are in same location.
                 return true;
             }elseif ($location == "footer") {
-                //If location of the plugin to register is header
-                //overrride plugin to load.
+                //If location of the plugin to register is footer
+                //No problem, we already have something that is
+                //needed in the header of the page.
                 return true;
             }
         }
@@ -596,7 +597,8 @@ class page_requirements_manager {
     protected function get_jquery_plugins_urls_by_location($location = "header"){
         if (empty($this->jqueryplugins['jquery'])) {
             // If nobody requested jQuery then do not bother to load anything.
-            // This may be useful for themes that want to override 'ui-css' only if requested by something else.
+            // This may be useful for themes that want to override 'ui-css' only 
+            //if requested by something else.
             return array();
         }
         $included = array();
